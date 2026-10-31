@@ -60,3 +60,4 @@ describe('VoiceEventTools Suite', () => {
     expect(proposal.status).toBe('cancelled');
   });
 });
+

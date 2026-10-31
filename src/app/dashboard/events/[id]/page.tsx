@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Share2,
@@ -23,7 +22,7 @@ import AppShell from '@/components/layout/AppShell';
 import BudgetPlanningView from '@/components/events/BudgetPlanningView';
 import TimelineTasksView from '@/components/events/TimelineTasksView';
 import VendorsDirectoryView from '@/components/events/VendorsDirectoryView';
-import { getEventById, saveEvent, toggleTaskCompletion, type StoredEvent } from '@/lib/storage';
+import { getEventById, saveEvent, toggleTaskCompletion, INITIAL_EVENTS, type StoredEvent } from '@/lib/storage';
 import { generateEventMarkdownReport, generateBudgetCSV } from '@/features/planning/export';
 import { type MemberRole, validateCollaboratorInvite } from '@/features/planning/collaboration';
 
@@ -40,8 +39,7 @@ export default function EventDashboardPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-  const router = useRouter();
-  const [event, setEvent] = useState<StoredEvent | null>(null);
+  const [event, setEvent] = useState<StoredEvent | null>(() => getEventById(resolvedParams.id) || INITIAL_EVENTS.find((e) => e.id === resolvedParams.id) || INITIAL_EVENTS[0]);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'budget' | 'vendors' | 'guests' | 'documents'>('overview');
   const [copiedShare, setCopiedShare] = useState(false);
   const [copiedReport, setCopiedReport] = useState(false);
@@ -58,20 +56,21 @@ export default function EventDashboardPage({
 
   useEffect(() => {
     const found = getEventById(resolvedParams.id);
-    if (!found) {
-      router.push('/dashboard');
-      return;
+    if (found) {
+      setEvent(found);
     }
-    setEvent(found);
-  }, [resolvedParams.id, router]);
+  }, [resolvedParams.id]);
 
   if (!event) {
     return (
       <AppShell>
         <div className="flex h-96 items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
-            <p className="text-sm font-medium text-slate-500">Loading event workspace…</p>
+          <div className="flex flex-col items-center gap-3 text-center">
+            <p className="text-base font-bold text-slate-800">Event not found</p>
+            <p className="text-xs text-slate-500">The requested event could not be located in your workspace.</p>
+            <Link href="/dashboard" className="mt-2 text-xs font-bold text-white bg-violet-600 px-4 py-2 rounded-xl hover:bg-violet-700 transition">
+              Go to Dashboard
+            </Link>
           </div>
         </div>
       </AppShell>

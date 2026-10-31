@@ -225,3 +225,4 @@ export function getTextToSpeechService(): ITextToSpeechService {
   if (!defaultTTS) defaultTTS = new BrowserTextToSpeechService();
   return defaultTTS;
 }
+

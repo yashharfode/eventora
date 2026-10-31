@@ -48,3 +48,4 @@ export default function VoiceWaveform({ status }: VoiceWaveformProps) {
     </div>
   );
 }
+

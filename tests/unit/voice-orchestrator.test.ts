@@ -57,3 +57,4 @@ describe('VoiceCoPlannerOrchestrator Suite', () => {
     expect(orchestrator.getPendingProposal()).toBeNull();
   });
 });
+
