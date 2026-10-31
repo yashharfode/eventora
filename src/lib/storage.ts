@@ -423,22 +423,14 @@ export function saveEvent(eventInput: Partial<StoredEvent> & { name: string; eve
     events.unshift(savedItem);
   }
 
-  try {
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
-  } catch (err) {
-    console.error('Failed to save event to localStorage', err);
-  }
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') { try { if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') { localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events)); } } catch (err) { console.error('Failed to save event to localStorage', err); } }
 
   return savedItem;
 }
 
 export function deleteEvent(id: string): void {
   const events = getEvents().filter((e) => e.id !== id);
-  try {
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
-  } catch (err) {
-    console.error('Failed to delete event from localStorage', err);
-  }
+  if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') { try { if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') { localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events)); } } catch (err) { console.error('Failed to delete event from localStorage', err); } }
 }
 
 export function toggleTaskCompletion(eventId: string, taskId: string): StoredEvent | null {
@@ -455,7 +447,7 @@ export function toggleTaskCompletion(eventId: string, taskId: string): StoredEve
       timeAgo: 'Just now',
       type: 'task',
     });
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') { localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events)); }
   }
   return event;
 }

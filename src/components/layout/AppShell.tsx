@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import { getUser, removeUser, type User } from '@/lib/storage';
+import VoiceCoPlannerModal from '@/components/voice/VoiceCoPlannerModal';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -210,6 +211,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex-1">
           {children}
         </div>
+
+        {/* Intelligent Voice AI Co-Planner Modal */}
+        <VoiceCoPlannerModal currentEventId={pathname?.match(/\/dashboard\/events\/([^/]+)/)?.[1]} />
       </div>
     </div>
   );

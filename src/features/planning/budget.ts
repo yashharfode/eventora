@@ -137,3 +137,68 @@ export function formatCurrency(amountMinor: number, currency = 'INR', locale = '
     maximumFractionDigits: 0,
   }).format(amountMinor / 100);
 }
+
+/**
+ * Expresses an INR minor amount in natural Indian words (e.g., ₹15 Lakh, ₹1.5 Crore, ₹50,000).
+ */
+export function formatIndianCurrencyWords(amountMinor: number): string {
+  if (!Number.isSafeInteger(amountMinor) || amountMinor < 0) {
+    throw new Error('Currency amount must be a non-negative safe integer.');
+  }
+  const rupees = amountMinor / 100;
+  if (rupees >= 10_000_000) {
+    const crore = (rupees / 10_000_000).toFixed(2).replace(/\.?0+$/, '');
+    return `₹${crore} Crore`;
+  }
+  if (rupees >= 100_000) {
+    const lakh = (rupees / 100_000).toFixed(2).replace(/\.?0+$/, '');
+    return `₹${lakh} Lakh`;
+  }
+  return formatCurrency(amountMinor, 'INR', 'en-IN');
+}
+
+/**
+ * Parses user input in conversational formats: "12 lakh", "12L", "1.5 crore", "50k", "1500000", "₹12,00,000".
+ * Also extracts amounts from conversational sentences like "reduce my budget to 12 lakh".
+ * Returns amount in minor units (paise), or null if unparseable.
+ * Supports any non-negative amount without arbitrary min or max constraints.
+ */
+export function parseIndianCurrencyInput(input: string): number | null {
+  if (!input || !input.trim()) return null;
+
+  // 1. Crore pattern: e.g. "1.5 crore", "2cr"
+  const croreMatch = input.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:crore|cr)\b/i);
+  if (croreMatch) {
+    const val = parseFloat(croreMatch[1]) * 10_000_000;
+    const minor = Math.round(val * 100);
+    return Number.isSafeInteger(minor) && minor >= 0 ? minor : null;
+  }
+
+  // 2. Lakh pattern: e.g. "12 lakh", "12l", "12 lac"
+  const lakhMatch = input.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:lakh|lac|l)\b/i);
+  if (lakhMatch) {
+    const val = parseFloat(lakhMatch[1]) * 100_000;
+    const minor = Math.round(val * 100);
+    return Number.isSafeInteger(minor) && minor >= 0 ? minor : null;
+  }
+
+  // 3. Thousand (k) pattern: e.g. "50k", "50 thousand"
+  const kMatch = input.match(/([0-9]+(?:\.[0-9]+)?)\s*(?:k|thousand)\b/i);
+  if (kMatch) {
+    const val = parseFloat(kMatch[1]) * 1_000;
+    const minor = Math.round(val * 100);
+    return Number.isSafeInteger(minor) && minor >= 0 ? minor : null;
+  }
+
+  // 4. Formatted currency or direct number: e.g. "₹25,00,000" or "1500000" or "500"
+  const digitsMatch = input.replace(/[₹,\s]/g, '').match(/([0-9]+(?:\.[0-9]+)?)/);
+  if (digitsMatch) {
+    const num = parseFloat(digitsMatch[1]);
+    if (!isNaN(num) && num >= 0 && Number.isFinite(num)) {
+      const minor = Math.round(num * 100);
+      return Number.isSafeInteger(minor) && minor >= 0 ? minor : null;
+    }
+  }
+
+  return null;
+}

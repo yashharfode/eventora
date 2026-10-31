@@ -361,9 +361,7 @@ export default function NewEventWizardPage() {
                   </label>
                   <input
                     type="number"
-                    min="1"
-                    required
-                    value={form.guestCount}
+                    min="0" required value={form.guestCount}
                     onChange={(e) => setForm({ ...form, guestCount: Number(e.target.value) })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none focus:bg-white focus:border-violet-500 focus:ring-4 focus:ring-violet-100 transition"
                   />
@@ -375,8 +373,7 @@ export default function NewEventWizardPage() {
                   </label>
                   <input
                     type="number"
-                    min="1000"
-                    step="5000"
+                    min="0" step="any"
                     required
                     value={form.budget}
                     onChange={(e) => setForm({ ...form, budget: Number(e.target.value) })}
