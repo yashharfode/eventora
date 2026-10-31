@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, CalendarDays, ChartNoAxesCombined, ShieldCheck, Sparkles } from 'lucide-react';
+import Logo from '@/components/ui/Logo';
 
 const features = [
   { icon: Sparkles, title: 'AI event architect', text: 'Turn a brief into a structured, editable event plan.' },
@@ -11,7 +12,7 @@ const features = [
 export default function HomePage() {
   return <main className="min-h-screen overflow-hidden">
     <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
-      <Link href="/" className="text-2xl font-black tracking-tight">EVENTORA<span className="text-violet-600">.</span></Link>
+      <Logo href="/" size="md" variant="light" subtitleText="AI EVENT CO-PILOT" />
       <Link href="/dashboard" className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">Open workspace <ArrowRight className="ml-2 inline" size={16}/></Link>
     </nav>
     <section className="mx-auto grid max-w-7xl items-center gap-12 px-6 pb-20 pt-16 md:grid-cols-2 md:pt-24">

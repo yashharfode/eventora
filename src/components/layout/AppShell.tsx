@@ -19,6 +19,7 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react';
+import Logo from '@/components/ui/Logo';
 import { getUser, removeUser, type User } from '@/lib/storage';
 
 const NAV_ITEMS = [
@@ -60,19 +61,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-[#111827] text-slate-300 border-r border-slate-800 shrink-0 sticky top-0 h-screen select-none">
-        {/* Brand */}
-        <div className="h-16 flex items-center px-6 gap-3 border-b border-slate-800/80">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-violet-500/30">
-            <Sparkles size={18} className="animate-pulse" />
-          </div>
-          <div>
-            <span className="text-lg font-black tracking-wider text-white">
-              EVENTORA<span className="text-violet-500">.</span>
-            </span>
-            <span className="block text-[10px] uppercase font-bold tracking-widest text-violet-400 -mt-1">
-              AI Event Co-Pilot
-            </span>
-          </div>
+        {/* Professional Brand Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-slate-800/80">
+          <Logo href="/dashboard" size="md" variant="dark" subtitleText="AI EVENT CO-PILOT" />
         </div>
 
         {/* Navigation */}
@@ -131,8 +122,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
           <div className="relative w-64 bg-[#111827] text-slate-300 flex flex-col h-full z-10 p-4">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <span className="text-lg font-black text-white">EVENTORA<span className="text-violet-500">.</span></span>
-              <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 hover:text-white">
+              <Logo href="/dashboard" size="sm" variant="dark" subtitleText="AI EVENT CO-PILOT" />
+              <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 hover:text-white p-1">
                 <X size={20} />
               </button>
             </div>

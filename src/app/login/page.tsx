@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Logo from '@/components/ui/Logo';
 import { getUser, setUser } from '@/lib/storage';
 
 export default function LoginPage() {
@@ -56,10 +57,8 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10">
       <section className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-xl">
-        <Link href="/" className="text-xl font-black">
-          EVENTORA<span className="text-violet-600">.</span>
-        </Link>
-        <h1 className="mt-8 text-3xl font-black">Welcome back.</h1>
+        <Logo href="/" size="md" variant="light" subtitleText="SMART EVENT PLATFORM" />
+        <h1 className="mt-8 text-3xl font-black text-slate-900">Welcome back.</h1>
         <p className="mt-2 text-slate-500">Sign in to manage your events with local storage.</p>
 
         <form onSubmit={handleLogin} className="mt-7">
@@ -117,7 +116,7 @@ export default function LoginPage() {
         </button>
 
         <p className="mt-5 text-center text-xs text-slate-400">
-          Running in local mode: your events & session are saved locally in your browser.
+          Running in local mode: your events &amp; session are saved locally in your browser.
         </p>
       </section>
     </main>
