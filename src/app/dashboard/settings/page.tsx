@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Save, RotateCcw, Shield, Bell, Database } from 'lucide-react';
+import { RotateCcw, Database } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import { getUser, setUser, INITIAL_EVENTS } from '@/lib/storage';
 

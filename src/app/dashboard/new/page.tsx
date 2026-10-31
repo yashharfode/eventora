@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
@@ -18,10 +17,6 @@ import {
   RotateCcw,
   Check,
   Wallet,
-  Clock,
-  Store,
-  ArrowLeft,
-  ChevronRight,
   Image as ImageIcon,
   Upload,
   X
@@ -142,7 +137,7 @@ export default function NewEventWizardPage() {
           style_tag: plan?.themeIdeas?.[0]?.title || 'Custom AI Blueprint',
           summary: plan?.summary,
           theme_ideas: plan?.themeIdeas,
-          budget_items: plan?.budget?.map((b: any, idx: number) => ({
+          budget_items: plan?.budget?.map((b: { category: string; amountMinor: number; rationale: string }, idx: number) => ({
             category: b.category,
             amountMinor: b.amountMinor,
             spentMinor: 0,
@@ -150,7 +145,7 @@ export default function NewEventWizardPage() {
             rationale: b.rationale,
             color: ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#6366f1', '#f43f5e'][idx % 8],
           })),
-          tasks: plan?.tasks?.map((t: any, idx: number) => ({
+          tasks: plan?.tasks?.map((t: { title: string; daysBeforeEvent: number; priority: "low" | "medium" | "high" }, idx: number) => ({
             id: `tsk-ai-${idx}-${Date.now()}`,
             title: t.title,
             milestone: t.daysBeforeEvent > 90 ? '4-6 Months Before' : t.daysBeforeEvent > 30 ? '1-2 Months Before' : '2 Weeks Before',
@@ -189,6 +184,7 @@ export default function NewEventWizardPage() {
       isSubscribed = false;
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep]);
 
   function handleStartAIPlan(e: React.FormEvent) {

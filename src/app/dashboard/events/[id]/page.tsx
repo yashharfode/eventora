@@ -9,22 +9,30 @@ import {
   Calendar,
   MapPin,
   Users2,
-  CheckCircle2,
-  Wallet,
-  Store,
-  Clock,
   Square,
   CheckSquare,
   Sparkles,
-  ArrowRight,
   FileText,
-  UserCheck
+  Download,
+  Copy,
+  Check,
+  UserPlus,
+  ShieldCheck
 } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import BudgetPlanningView from '@/components/events/BudgetPlanningView';
 import TimelineTasksView from '@/components/events/TimelineTasksView';
 import VendorsDirectoryView from '@/components/events/VendorsDirectoryView';
 import { getEventById, saveEvent, toggleTaskCompletion, type StoredEvent } from '@/lib/storage';
+import { generateEventMarkdownReport, generateBudgetCSV } from '@/features/planning/export';
+import { type MemberRole, validateCollaboratorInvite } from '@/features/planning/collaboration';
+
+type Collaborator = {
+  id: string;
+  name: string;
+  email: string;
+  role: MemberRole;
+};
 
 export default function EventDashboardPage({
   params,
@@ -36,6 +44,17 @@ export default function EventDashboardPage({
   const [event, setEvent] = useState<StoredEvent | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'budget' | 'vendors' | 'guests' | 'documents'>('overview');
   const [copiedShare, setCopiedShare] = useState(false);
+  const [copiedReport, setCopiedReport] = useState(false);
+
+  // Collaborator management state
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([
+    { id: 'c-1', name: 'Yash Harfode', email: 'yash@eventora.app', role: 'owner' },
+    { id: 'c-2', name: 'Event Coordinator', email: 'coordinator@eventora.app', role: 'admin' },
+    { id: 'c-3', name: 'Family Lead', email: 'family@eventora.app', role: 'editor' },
+  ]);
+  const [newCollabEmail, setNewCollabEmail] = useState('');
+  const [newCollabRole, setNewCollabRole] = useState<MemberRole>('editor');
+  const [collabError, setCollabError] = useState('');
 
   useEffect(() => {
     const found = getEventById(resolvedParams.id);
@@ -63,7 +82,6 @@ export default function EventDashboardPage({
   const tasks = event.tasks || [];
   const vendors = event.vendors || [];
   const budgetItems = event.budget_items || [];
-  const activities = event.activities || [];
 
   const completedTasks = tasks.filter((t) => t.completed).length;
   const totalTasks = tasks.length;
@@ -83,6 +101,63 @@ export default function EventDashboardPage({
       setCopiedShare(true);
       setTimeout(() => setCopiedShare(false), 2000);
     }
+  }
+
+  function handleDownloadMarkdown() {
+    if (!event) return;
+    const report = generateEventMarkdownReport(event);
+    const blob = new Blob([report], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${event.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-blueprint.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadCSV() {
+    if (!event) return;
+    const csv = generateBudgetCSV(event);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${event.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-budget.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleCopyReport() {
+    if (!event) return;
+    const report = generateEventMarkdownReport(event);
+    navigator.clipboard.writeText(report);
+    setCopiedReport(true);
+    setTimeout(() => setCopiedReport(false), 2000);
+  }
+
+  function handleAddCollaborator(e: React.FormEvent) {
+    e.preventDefault();
+    setCollabError('');
+    if (!newCollabEmail || !newCollabEmail.includes('@')) {
+      setCollabError('Please provide a valid email address.');
+      return;
+    }
+
+    const validation = validateCollaboratorInvite('owner', newCollabRole);
+    if (!validation.allowed) {
+      setCollabError(validation.reason || 'Permission denied.');
+      return;
+    }
+
+    const newMember: Collaborator = {
+      id: `collab-${Date.now()}`,
+      name: newCollabEmail.split('@')[0],
+      email: newCollabEmail,
+      role: newCollabRole,
+    };
+
+    setCollaborators((prev) => [...prev, newMember]);
+    setNewCollabEmail('');
   }
 
   function handleToggleTask(taskId: string) {
@@ -156,7 +231,7 @@ export default function EventDashboardPage({
                   : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              {tab}
+              {tab === 'guests' ? 'Collaborators & Guests' : tab === 'documents' ? 'Reports & Exports' : tab}
             </button>
           ))}
         </div>
@@ -226,7 +301,7 @@ export default function EventDashboardPage({
 
             {/* Split Content: Next Tasks & Budget Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Left Column (8 cols): Next Upcoming Tasks & Recent Activity */}
+              {/* Left Column: Next Upcoming Tasks & Recent Activity */}
               <div className="lg:col-span-8 space-y-6">
                 {/* Next Upcoming Tasks */}
                 <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
@@ -241,7 +316,7 @@ export default function EventDashboardPage({
                   </div>
 
                   <div className="divide-y divide-slate-100">
-                    {event.tasks.slice(0, 4).map((task) => (
+                    {tasks.slice(0, 4).map((task) => (
                       <div
                         key={task.id}
                         onClick={() => handleToggleTask(task.id)}
@@ -269,7 +344,7 @@ export default function EventDashboardPage({
                 <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
                   <h3 className="text-base font-bold text-slate-900">Recent Activity</h3>
                   <div className="space-y-3">
-                    {event.activities.map((act) => (
+                    {(event.activities || []).map((act) => (
                       <div key={act.id} className="flex items-center justify-between text-xs sm:text-sm py-1.5">
                         <div className="flex items-center gap-3">
                           <span className="h-2 w-2 rounded-full bg-violet-600" />
@@ -282,7 +357,7 @@ export default function EventDashboardPage({
                 </div>
               </div>
 
-              {/* Right Column (4 cols): Budget Overview Donut Widget */}
+              {/* Right Column: Budget Overview Donut Widget */}
               <div className="lg:col-span-4 space-y-6">
                 <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 text-center">
                   <div className="flex items-center justify-between">
@@ -295,7 +370,6 @@ export default function EventDashboardPage({
                     </button>
                   </div>
 
-                  {/* Mini Donut representation */}
                   <div className="relative inline-flex items-center justify-center my-2">
                     <div className="h-44 w-44 rounded-full border-8 border-violet-100 border-t-violet-600 border-r-indigo-500 flex flex-col items-center justify-center">
                       <span className="text-2xl font-black text-slate-900">
@@ -307,7 +381,6 @@ export default function EventDashboardPage({
                     </div>
                   </div>
 
-                  {/* Spent vs Remaining Legend */}
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs">
                     <div className="bg-slate-50 p-2.5 rounded-xl">
                       <div className="flex items-center justify-center gap-1.5 text-slate-500 font-medium">
@@ -331,7 +404,7 @@ export default function EventDashboardPage({
                   </div>
                 </div>
 
-                {/* AI Assistant Quick Advice */}
+                {/* AI Co-Planner Tip */}
                 <div className="rounded-3xl bg-slate-950 p-6 text-white space-y-3">
                   <div className="flex items-center gap-2">
                     <Sparkles size={16} className="text-violet-400" />
@@ -340,7 +413,7 @@ export default function EventDashboardPage({
                     </span>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed">
-                    {event.ai_insights[0] || 'Keep track of vendor payment schedules to ensure smooth coordination.'}
+                    {(event.ai_insights || [])[0] || 'Keep track of vendor payment schedules to ensure smooth coordination.'}
                   </p>
                 </div>
               </div>
@@ -378,34 +451,148 @@ export default function EventDashboardPage({
           />
         )}
 
-        {/* ---------------- 5. GUESTS TAB ---------------- */}
+        {/* ---------------- 5. COLLABORATORS & GUESTS TAB ---------------- */}
         {activeTab === 'guests' && (
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-4">
-            <UserCheck className="mx-auto text-violet-600" size={40} />
-            <h3 className="text-lg font-bold text-slate-900">Guest List &amp; RSVPs</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Total planned capacity: {event.guest_count} attendees. Digital invitation link and seating charts ready.
-            </p>
-            <div className="pt-2">
-              <span className="inline-flex rounded-full bg-violet-50 text-violet-700 px-4 py-2 text-xs font-bold">
-                RSVP Management Enabled
-              </span>
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* Header & RSVP Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                <span className="text-2xl font-black text-slate-900">{event.guest_count}</span>
+                <p className="text-xs text-slate-500 font-semibold uppercase mt-1">Expected Guests</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                <span className="text-2xl font-black text-emerald-600">
+                  {Math.round(event.guest_count * 0.85)}
+                </span>
+                <p className="text-xs text-slate-500 font-semibold uppercase mt-1">Confirmed RSVPs (85%)</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                <span className="text-2xl font-black text-violet-600">{collaborators.length}</span>
+                <p className="text-xs text-slate-500 font-semibold uppercase mt-1">Active Team Collaborators</p>
+              </div>
+            </div>
+
+            {/* Team Collaborators with RBAC */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <ShieldCheck size={20} className="text-violet-600" />
+                    Team Access &amp; Collaborator Roles
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Role-Based Access Control: Owner, Admin, Editor, and Viewer permissions.
+                  </p>
+                </div>
+              </div>
+
+              {/* Invite Form */}
+              <form onSubmit={handleAddCollaborator} className="flex flex-wrap items-center gap-3 pt-2">
+                <input
+                  type="email"
+                  value={newCollabEmail}
+                  onChange={(e) => setNewCollabEmail(e.target.value)}
+                  placeholder="collaborator@example.com"
+                  className="flex-1 min-w-[240px] bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-slate-800 outline-none focus:border-violet-500"
+                />
+                <select
+                  value={newCollabRole}
+                  onChange={(e) => setNewCollabRole(e.target.value as MemberRole)}
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 outline-none"
+                >
+                  <option value="editor">Editor (Can edit budget &amp; tasks)</option>
+                  <option value="admin">Admin (Full management)</option>
+                  <option value="viewer">Viewer (Read-only)</option>
+                </select>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 hover:bg-violet-700 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition"
+                >
+                  <UserPlus size={14} /> Invite Collaborator
+                </button>
+              </form>
+
+              {collabError && (
+                <p className="text-xs text-rose-600 font-medium">{collabError}</p>
+              )}
+
+              {/* Members List */}
+              <div className="divide-y divide-slate-100 border-t border-slate-100 pt-3">
+                {collaborators.map((c) => (
+                  <div key={c.id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{c.name}</p>
+                      <p className="text-xs text-slate-500">{c.email}</p>
+                    </div>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                        c.role === 'owner'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : c.role === 'admin'
+                          ? 'bg-violet-100 text-violet-800 border border-violet-200'
+                          : c.role === 'editor'
+                          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {c.role}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* ---------------- 6. DOCUMENTS TAB ---------------- */}
+        {/* ---------------- 6. REPORTS & EXPORTS TAB ---------------- */}
         {activeTab === 'documents' && (
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-8 text-center space-y-4">
-            <FileText className="mx-auto text-violet-600" size={40} />
-            <h3 className="text-lg font-bold text-slate-900">Event Contracts &amp; Notes</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              All quotes, vendor receipts, floor plans, and schedules for {event.name} are stored here securely.
-            </p>
+          <div className="space-y-6 animate-in fade-in duration-300">
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <FileText size={20} className="text-violet-600" />
+                    Event Master Reports &amp; Exports
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Generate client-ready blueprints, vendor contracts, and budget audit files.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleCopyReport}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition"
+                  >
+                    {copiedReport ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+                    {copiedReport ? 'Copied to Clipboard!' : 'Copy Markdown'}
+                  </button>
+
+                  <button
+                    onClick={handleDownloadCSV}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition"
+                  >
+                    <Download size={14} /> Export Budget CSV
+                  </button>
+
+                  <button
+                    onClick={handleDownloadMarkdown}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-violet-600 hover:bg-violet-700 px-5 py-2 text-xs font-bold text-white shadow-xs transition"
+                  >
+                    <Download size={14} /> Download Blueprint (.md)
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview Window of Generated Markdown */}
+              <div className="bg-slate-900 text-slate-200 rounded-2xl p-5 font-mono text-xs overflow-x-auto max-h-[420px] overflow-y-auto leading-relaxed border border-slate-800">
+                <pre>{generateEventMarkdownReport(event)}</pre>
+              </div>
+            </div>
           </div>
         )}
       </div>
     </AppShell>
   );
 }
-

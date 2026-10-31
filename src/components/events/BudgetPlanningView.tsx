@@ -8,7 +8,6 @@ import {
   PiggyBank,
   Edit3,
   Check,
-  X,
   Sparkles
 } from 'lucide-react';
 import BudgetDonutChart from '@/components/budget/BudgetDonutChart';
@@ -31,6 +30,17 @@ export default function BudgetPlanningView({
     currency: event.currency,
     maximumFractionDigits: 0,
   }).format(totalMinor / 100);
+
+  function handlePercentageChange(index: number, newPercent: number) {
+    const updated = [...items];
+    const percent = Math.max(1, Math.min(100, isNaN(newPercent) ? 0 : newPercent));
+    updated[index] = {
+      ...updated[index],
+      percentage: percent,
+      amountMinor: Math.round((totalMinor * percent) / 100),
+    };
+    setItems(updated);
+  }
 
   function handleSaveEdit() {
     setEditing(false);
@@ -77,7 +87,7 @@ export default function BudgetPlanningView({
         {/* Right: Allocation Breakdown List */}
         <div className="lg:col-span-7 space-y-3">
           <div className="divide-y divide-slate-100">
-            {items.map((item, idx) => (
+            {items.map((item, index) => (
               <div key={item.category} className="py-2.5 flex items-center justify-between text-xs sm:text-sm">
                 <div className="flex items-center gap-3">
                   <span
@@ -87,17 +97,33 @@ export default function BudgetPlanningView({
                   <span className="font-semibold text-slate-800">{item.category}</span>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <span className="font-bold text-slate-900">
-                    {new Intl.NumberFormat('en-IN', {
-                      style: 'currency',
-                      currency: event.currency,
-                      maximumFractionDigits: 0,
-                    }).format(item.amountMinor / 100)}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400 w-12 text-right">
-                    ({item.percentage}%)
-                  </span>
+                <div className="flex items-center gap-3">
+                  {editing ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={item.percentage}
+                        onChange={(e) => handlePercentageChange(index, Number(e.target.value))}
+                        className="w-14 rounded-lg border border-slate-300 px-2 py-1 text-right text-xs font-bold text-slate-900"
+                      />
+                      <span className="text-xs font-bold text-slate-500">%</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="font-bold text-slate-900">
+                        {new Intl.NumberFormat('en-IN', {
+                          style: 'currency',
+                          currency: event.currency,
+                          maximumFractionDigits: 0,
+                        }).format(item.amountMinor / 100)}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400 w-12 text-right">
+                        ({item.percentage}%)
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -156,4 +182,3 @@ export default function BudgetPlanningView({
     </div>
   );
 }
-

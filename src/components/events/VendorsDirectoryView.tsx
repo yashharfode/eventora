@@ -6,10 +6,6 @@ import {
   Star,
   MapPin,
   Bookmark,
-  Check,
-  Send,
-  Eye,
-  Filter,
   CheckCircle2
 } from 'lucide-react';
 import type { StoredEvent, VendorItem } from '@/lib/storage';

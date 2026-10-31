@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Calendar, Users, MapPin, ArrowRight, Plus, Sparkles } from 'lucide-react';
+import { Calendar, Users, MapPin, ArrowRight, Plus } from 'lucide-react';
 import AppShell from '@/components/layout/AppShell';
 import { getEvents, type StoredEvent } from '@/lib/storage';
 

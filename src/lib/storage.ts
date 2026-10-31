@@ -348,7 +348,7 @@ export function getEventById(id: string): StoredEvent | null {
   return events.find((e) => e.id === id) || null;
 }
 
-export function saveEvent(eventInput: Partial<StoredEvent> & { name: string; event_type: any; event_date: string; location: string; guest_count: number; budget_minor: number }): StoredEvent {
+export function saveEvent(eventInput: Partial<StoredEvent> & { name: string; event_type: StoredEvent['event_type']; event_date: string; location: string; guest_count: number; budget_minor: number }): StoredEvent {
   const events = getEvents();
   const id = eventInput.id || 'evt_' + Math.random().toString(36).substring(2, 9);
   const now = new Date().toISOString();

@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/auth/require-user';
 import { createEventSchema } from '@/lib/validation/event';
 import { readJsonWithLimit, validateSameOrigin } from '@/lib/security/request';
+import type { StoredEvent } from '@/lib/storage';
 
 // In-memory fallback store for server API routes in local mode
-let inMemoryEvents: any[] = [];
+const inMemoryEvents: StoredEvent[] = [];
 
 export async function POST(request: Request) {
   const originError = validateSameOrigin(request);
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid event details.', issues: parsed.error.issues }, { status: 400 });
   }
 
-  const newEvent = {
+  const newEvent: StoredEvent = {
     id: 'evt_' + Math.random().toString(36).substring(2, 9),
     name: parsed.data.name,
     event_type: parsed.data.eventType,
@@ -37,7 +38,15 @@ export async function POST(request: Request) {
     budget_minor: parsed.data.budgetMinor,
     currency: parsed.data.currency,
     preferences: parsed.data.preferences,
+    cover_image: parsed.data.imageUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
+    status: 'planning',
     created_at: new Date().toISOString(),
+    budget_items: [],
+    tasks: [],
+    vendors: [],
+    activities: [],
+    ai_insights: [],
+    theme_ideas: [],
   };
 
   inMemoryEvents.unshift(newEvent);

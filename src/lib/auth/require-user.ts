@@ -1,11 +1,21 @@
-export async function requireUser() {
-  // Local storage mode: return a local mock user session
+export type AuthUser = {
+  id: string;
+  email: string;
+  user_metadata?: { name?: string };
+};
+
+export type AuthContext = {
+  user: AuthUser;
+  token?: string;
+};
+
+export async function requireUser(): Promise<AuthContext> {
+  // Local/server context session
   return {
     user: {
-      id: 'local-user-id',
-      email: 'local@eventora.app',
-      user_metadata: { name: 'Local User' },
+      id: 'usr_local_dev',
+      email: 'planner@eventora.local',
+      user_metadata: { name: 'Local Event Planner' },
     },
-    supabase: null as any,
   };
 }

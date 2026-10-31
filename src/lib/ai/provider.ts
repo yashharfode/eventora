@@ -90,7 +90,7 @@ export class OpenRouterMultimodalProvider implements AIProvider {
     }
 
     // If all free models fail or rate limit, fall back gracefully to heuristic provider
-    console.warn('[AI Provider] All OpenRouter models exhausted or rate-limited. Using local heuristic fallback.');
+    console.warn('[AI Provider] All OpenRouter models exhausted or rate-limited. Using local heuristic fallback. Last error:', lastError?.message);
     return new LocalHeuristicProvider().generatePlan(input);
   }
 
@@ -111,7 +111,11 @@ Important:
 - If an inspiration image is attached, reference its aesthetic, color palette, and styling in the themeIdeas, decor, and summary.
 - Output raw JSON only. Do not wrap in markdown or commentary.`;
 
-    const userContent: any[] = [
+    type MessageContentPart =
+      | { type: 'text'; text: string }
+      | { type: 'image_url'; image_url: { url: string } };
+
+    const userContent: MessageContentPart[] = [
       {
         type: 'text',
         text: `Event Brief:
@@ -157,7 +161,15 @@ ${input.imageUrl ? 'An inspiration image has been attached. Analyze its color pa
       throw new Error(`OpenRouter returned status ${response.status}: ${response.statusText}`);
     }
 
-    const payload: any = await response.json();
+    type OpenRouterResponse = {
+      choices?: Array<{
+        message?: {
+          content?: string;
+        };
+      }>;
+    };
+
+    const payload = (await response.json()) as OpenRouterResponse;
     const rawContent = payload.choices?.[0]?.message?.content;
     if (!rawContent) {
       throw new Error('OpenRouter returned an empty message content.');
@@ -167,7 +179,7 @@ ${input.imageUrl ? 'An inspiration image has been attached. Analyze its color pa
     const jsonMatch = rawContent.match(/```json\s*([\s\S]*?)\s*```/) || rawContent.match(/```\s*([\s\S]*?)\s*```/);
     const jsonString = jsonMatch ? jsonMatch[1].trim() : rawContent.trim();
 
-    const parsedJson = JSON.parse(jsonString);
+    const parsedJson: unknown = JSON.parse(jsonString);
     return generatedPlanSchema.parse(parsedJson);
   }
 }

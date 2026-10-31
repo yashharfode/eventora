@@ -4,13 +4,7 @@ import React, { useState } from 'react';
 import {
   CheckSquare,
   Square,
-  CheckCircle2,
-  Calendar,
-  Layers,
-  ListFilter,
-  Plus,
-  Clock
-} from 'lucide-react';
+  } from 'lucide-react';
 import type { StoredEvent, TaskItem } from '@/lib/storage';
 import { toggleTaskCompletion } from '@/lib/storage';
 
@@ -165,7 +159,7 @@ export default function TimelineTasksView({
             Interactive Gantt timeline progression across preparation months:
           </p>
           <div className="space-y-4 pt-2">
-            {tasks.map((task, idx) => {
+            {tasks.map((task) => {
               const progressWidth = task.completed ? 100 : Math.max(25, 100 - task.daysBeforeEvent / 2);
               return (
                 <div key={task.id} className="space-y-1.5">

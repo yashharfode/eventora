@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import { getUser, setUser } from '@/lib/storage';
