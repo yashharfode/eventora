@@ -39,6 +39,8 @@ declare global {
 export class BrowserSpeechToTextService implements ISpeechToTextService {
   private recognition: SpeechRecognitionInstance | null = null;
   private isListening = false;
+  private latestTranscript = '';
+  private deliveredFinal = false;
 
   isSupported(): boolean {
     if (typeof window === 'undefined') return false;
@@ -52,12 +54,14 @@ export class BrowserSpeechToTextService implements ISpeechToTextService {
     lang: SupportedLanguage = 'en-IN'
   ): void {
     if (!this.isSupported()) {
-      onError('Speech recognition is not supported in this browser. Please use typed input.');
+      onError('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari, or use typed input.');
       return;
     }
 
     try {
       this.stop();
+      this.latestTranscript = '';
+      this.deliveredFinal = false;
 
       const SpeechRecognitionConstructor =
         window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -90,22 +94,33 @@ export class BrowserSpeechToTextService implements ISpeechToTextService {
           if (res.isFinal) isFinal = true;
         }
 
-        onResult(transcript.trim(), isFinal);
+        const trimmed = transcript.trim();
+        this.latestTranscript = trimmed;
+        if (isFinal) {
+          this.deliveredFinal = true;
+        }
+        onResult(trimmed, isFinal);
       };
 
       this.recognition.onerror = (event: { error: string }) => {
         this.isListening = false;
-        if (event.error === 'not-allowed') {
-          onError('Microphone access denied. Please grant microphone permission in your browser.');
+        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+          onError('Microphone permission blocked. Please allow microphone access in your browser site settings.');
         } else if (event.error === 'no-speech') {
           // No speech detected, graceful ignore
+        } else if (event.error === 'network') {
+          onError('Speech service network error. Please check your internet connection.');
         } else {
-          onError(`Speech recognition error: ${event.error}`);
+          onError(`Speech recognition error (${event.error}). Please use typed input.`);
         }
       };
 
       this.recognition.onend = () => {
         this.isListening = false;
+        if (this.latestTranscript && !this.deliveredFinal) {
+          this.deliveredFinal = true;
+          onResult(this.latestTranscript, true);
+        }
         onEnd();
       };
 
@@ -113,7 +128,7 @@ export class BrowserSpeechToTextService implements ISpeechToTextService {
       this.isListening = true;
     } catch (err) {
       this.isListening = false;
-      onError(err instanceof Error ? err.message : 'Failed to initialize speech recognition.');
+      onError(err instanceof Error ? err.message : 'Failed to initialize microphone speech recognition.');
     }
   }
 
@@ -171,6 +186,7 @@ export class BrowserTextToSpeechService implements ITextToSpeechService {
         utterance.voice = matchingVoice;
       }
 
+      utterance.volume = 1.0;
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
 
@@ -182,7 +198,17 @@ export class BrowserTextToSpeechService implements ITextToSpeechService {
         if (onEnd) onEnd();
       };
 
-      window.speechSynthesis.speak(utterance);
+      // Slight timeout to ensure clean reset on Chromium
+      setTimeout(() => {
+        try {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+          }
+          window.speechSynthesis.speak(utterance);
+        } catch {
+          if (onEnd) onEnd();
+        }
+      }, 50);
     } catch {
       if (onEnd) onEnd();
     }
@@ -225,4 +251,3 @@ export function getTextToSpeechService(): ITextToSpeechService {
   if (!defaultTTS) defaultTTS = new BrowserTextToSpeechService();
   return defaultTTS;
 }
-

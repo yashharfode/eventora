@@ -104,6 +104,11 @@ export default function VoiceCoPlannerModal({
     if (status === 'listening') {
       stt.stop();
       setStatus('idle');
+      if (liveTranscript.trim()) {
+        const textToProcess = liveTranscript.trim();
+        setLiveTranscript('');
+        handleProcessInput(textToProcess);
+      }
       return;
     }
 
@@ -122,9 +127,18 @@ export default function VoiceCoPlannerModal({
           handleProcessInput(transcript.trim());
         }
       },
-      () => {
+      (errorMsg) => {
         setStatus('failed');
-        setTimeout(() => setStatus('idle'), 2500);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: 'msg_err_' + Date.now(),
+            role: 'system',
+            text: `⚠️ Voice input note: ${errorMsg || 'Microphone error'}. You can also type your message in the text box below.`,
+            timestamp: Date.now(),
+          },
+        ]);
+        setTimeout(() => setStatus('idle'), 3000);
       },
       () => {
         setStatus((prev) => (prev === 'listening' ? 'idle' : prev));

@@ -104,6 +104,11 @@ export default function AssistantPage() {
     if (status === 'listening') {
       stt.stop();
       setStatus('idle');
+      if (liveTranscript.trim()) {
+        const textToProcess = liveTranscript.trim();
+        setLiveTranscript('');
+        handleSend(textToProcess);
+      }
       return;
     }
 
@@ -121,9 +126,18 @@ export default function AssistantPage() {
           handleSend(transcript.trim());
         }
       },
-      () => {
+      (errorMsg) => {
         setStatus('failed');
-        setTimeout(() => setStatus('idle'), 2500);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: 'msg_err_' + Date.now(),
+            role: 'assistant',
+            text: `⚠️ Voice input note: ${errorMsg || 'Microphone error'}. You can also type directly in the chat box below.`,
+            timestamp: Date.now(),
+          },
+        ]);
+        setTimeout(() => setStatus('idle'), 3000);
       },
       () => {
         setStatus((prev) => (prev === 'listening' ? 'idle' : prev));
